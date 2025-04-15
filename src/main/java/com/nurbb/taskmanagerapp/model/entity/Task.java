@@ -1,83 +1,152 @@
 package com.nurbb.taskmanagerapp.model.entity;
 
+import jakarta.persistence.*;
+import  lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Entity
+@Table(name = "tasks")
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+
 public class Task {
+    @Id
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
-   private UUID id;
-   private String title;
-   private String description;
-   private TaskStatus status;
-   private LocalDateTime createdAt;
-   private LocalDateTime updatedAt;
+    @Column(name = "title", nullable = false)
+    private String title;
 
-   public enum TaskStatus {
-       TODO,
-       IN_PROGRESS,
-       DONE
-   }
-   public UUID getId(){
-       return id;
-   }
+    @Column(name = "description", length = 2000)
+    private String description;
 
-   public void setId(UUID id){
-       this.id = id;
-   }
+    @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @With
+    private TaskStatus status;
 
-    public Task(UUID id, String title, String description, TaskStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "priority_value")
+    private int priorityValue;
+
+    @Column(name = "priority_label")
+    private String priorityLabel;
+
+    public Task.Priority getPriority() {
+        return switch (status) {
+            case PENDING, COMPLETED -> new LowPriority();
+            case IN_PROGRESS -> new MediumPriority();
+            case BLOCKED -> new HighPriority();
+        };
     }
 
-    public TaskStatus getStatus() {
-        return status;
+    @PrePersist
+    protected void onCreate() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        updatedAt = LocalDateTime.now();
+
+        updatePriorityFields();
     }
 
-    public void setStatus(TaskStatus status) {
-        this.status = status;
+    @PostUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
-    public String getTitle() {
-        return title;
+    private void updatePriorityFields() {
+        Priority priority = switch (status) {
+            case PENDING, COMPLETED -> new LowPriority();
+            case IN_PROGRESS -> new MediumPriority();
+            case BLOCKED -> new HighPriority();
+        };
+
+        this.priorityValue = priority.getValue();
+        this.priorityLabel = priority.getLabel();
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public static class TaskBuilder {
+        private UUID id = UUID.randomUUID();
+        private TaskStatus status = TaskStatus.PENDING;
+        private LocalDateTime createdAt = LocalDateTime.now();
     }
 
-    public String getDescription() {
-        return description;
+    public Task updateStatus(TaskStatus newStatus) {
+        Task updated = this.withStatus(newStatus);
+        updated.updatedAt = LocalDateTime.now();
+        updated.updatePriorityFields();
+        return updated;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public enum TaskStatus {
+        PENDING, IN_PROGRESS, BLOCKED, COMPLETED
     }
 
-
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public sealed interface Priority permits LowPriority, MediumPriority, HighPriority {
+        String getLabel();
+        int getValue();
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public enum TaskPriority {
+        LOW( 1, "Low"),
+        MEDIUM(2, "Medium"),
+        HIGH(3, "High");
+
+        private final int value;
+        private final String label;
+
+        TaskPriority(int value, String label) {
+            this.value = value;
+            this.label = label;
+        }
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public static final class LowPriority implements Priority {
+        @Override
+        public String   getLabel() {
+            return TaskPriority.LOW.label;
+        }
+
+        @Override
+        public int getValue() {
+            return TaskPriority.LOW.value;
+        }
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public static final class MediumPriority implements Priority {
+        @Override
+        public String getLabel() {
+            return TaskPriority.MEDIUM.label;
+        }
+
+        @Override
+        public int getValue() {
+            return TaskPriority.MEDIUM.value;
+        }
     }
 
+    public static final class HighPriority implements Priority {
+        @Override
+        public String getLabel() {
+            return TaskPriority.HIGH.label;
+        }
 
-
-    public Task() {
+        @Override
+        public int getValue() {
+            return TaskPriority.HIGH.value;
+        }
     }
 }
