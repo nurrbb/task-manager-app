@@ -11,13 +11,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+//Veri katmanı olarak işaretliyoruz DI için tanımlama yapılır.
 @Repository
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
+
     List<Task> findByStatus(Task.TaskStatus status);
+
     List<Task> findByTitleContainingIgnoreCase(String title);
+
     Optional<Task> findFirstByOrderByCreatedAtDesc();
+
     long countByStatus(Task.TaskStatus status);
+
     List<Task> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT t FROM Task t WHERE t.priorityValue= : value ORDER BY t.createdAt DESC ")

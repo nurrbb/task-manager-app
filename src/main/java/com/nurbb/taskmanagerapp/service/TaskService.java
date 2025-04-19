@@ -23,14 +23,19 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TaskService {
+
     private final TaskRepository taskRepository;
+
+    //Görev oluşturulunca ya da tamamlanınca tetiklenecek listenerı tutar
+    // event- driven programlama yapısı
     private final List<Consumer<Task>> taskCreationListeners = new ArrayList<>();
     private final List<Consumer<Task>> taskCompletionListeners = new ArrayList<>();
 
+
     @Transactional
     public TaskResponseDTO createTask(String title,String description) {
-        validateTaskInput(title,description);
-        Task task = Task.builder()
+        validateTaskInput(title,description); //Boş başlık oluşturmaya karşı kontrol
+        Task task = Task.builder() //yeni görev oluşturma
                 .title(title)
                 .description(description)
                 .build();

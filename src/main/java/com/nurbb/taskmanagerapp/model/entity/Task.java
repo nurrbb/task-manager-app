@@ -49,6 +49,8 @@ public class Task {
         };
     }
 
+    // JPA Lifecycle anotasyonu: Veritabanı işlemleri gerçekleşmeden hemen önce ya da sonra otomatik olarak çalıştırılır
+    // Boş olan alanları dolduruluyor
     @PrePersist
     protected void onCreate() {
         if (id == null) {
@@ -62,6 +64,8 @@ public class Task {
         updatePriorityFields();
     }
 
+    //JPA Lifecycle anotasyonu.
+    // Bir nesne  veritabanında güncelleme yapıldıktan sonra otomatik olarak tetiklenir
     @PostUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
@@ -84,6 +88,9 @@ public class Task {
         private LocalDateTime createdAt = LocalDateTime.now();
     }
 
+    // Task'ın kopyası oluşturulur status alanını newStatus ile değiştirilir
+    // Nesneler doğrudan değştirilmez, her değişiklikte yeni bir nesne oluşturulur.
+    // @WithXXX:  Sadece bir alanı değiştirip geri kalan her şeyi aynı bırakarak yeni bir nesne üreten Lombok'un metodu.
     public Task updateStatus(TaskStatus newStatus) {
         Task updated = this.withStatus(newStatus);
         updated.updatedAt = LocalDateTime.now();
@@ -95,6 +102,7 @@ public class Task {
         PENDING, IN_PROGRESS, BLOCKED, COMPLETED
     }
 
+    //Sealed interface: Kontrollü kalıtım için permit ile belirtilen sınıfların yalnızca sealed interface i implement etmesine izin verilir.
     public sealed interface Priority permits LowPriority, MediumPriority, HighPriority {
         String getLabel();
         int getValue();
