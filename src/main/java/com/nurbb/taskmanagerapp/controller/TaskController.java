@@ -20,11 +20,18 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+//İstemciden HTTP isteği gelir (POST,GET,PUT)
+//DispatcherServlet URL ile eşleşen yöntem bulur
+//Metot iş mantığını barındıran service sınıfına çağrı yapar
+//Service den gelen HTTP cevabı responseEntity olarak döndürülür
+
 @RestController
 @RequestMapping("/tasks")
 public class TaskController {
     private final TaskService taskService;
 
+    //Constructor - based dependency injection örneğidir.
+    // Task service sınıfı controllera inject edilmiştir.
     @Autowired
     public TaskController(TaskService taskService) {
         this.taskService = taskService;
@@ -32,6 +39,7 @@ public class TaskController {
 
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 
+    //request içeriği TaskRequest modeline bağlanır.
     public ResponseEntity<TaskResponseDTO> createTask(@RequestBody TaskRequest request){
         TaskResponseDTO newTask = taskService.createTask(request.getTitle(),request.getDescription());
         return new ResponseEntity<>(newTask, HttpStatus.CREATED);

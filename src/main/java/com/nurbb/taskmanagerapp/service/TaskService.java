@@ -28,6 +28,9 @@ public class TaskService {
 
     //Görev oluşturulunca ya da tamamlanınca tetiklenecek listenerı tutar
     // event- driven programlama yapısı
+    //Consumer<T> fonksiyonel bir Java arayüzüdür. accept(T t) adında tek bir metodu vardır.
+    //Bu interface'i kullanan her şey, Task objesini alıp onunla bir işlem yapabilir.
+    // Örnek: loglama, bildirim yollama, başka bir servisi çağırma gibi
     private final List<Consumer<Task>> taskCreationListeners = new ArrayList<>();
     private final List<Consumer<Task>> taskCompletionListeners = new ArrayList<>();
 
@@ -42,6 +45,7 @@ public class TaskService {
         Task savedTask = taskRepository.save(task);
 
         taskCreationListeners.forEach(listener -> listener.accept(savedTask));
+
         return ManualTaskMapper.toDTO(savedTask);
     }
 
