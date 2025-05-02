@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 //Veri katmanı olarak işaretliyoruz DI için tanımlama yapılır.
+
 @Repository
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
@@ -26,11 +27,15 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     List<Task> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
+    //JPQL(Java Persistence Query Language) nesne odaklıdır sınıf isimleriyle çalışır
+
     @Query("SELECT t FROM Task t WHERE t.priorityValue= : value ORDER BY t.createdAt DESC ")
     List<Task> findTasksByPriorityValue(@Param("Value") int priorityValue);
 
     @Query("SELECT t FROM Task t WHERE t.createdAt < : date AND t.status != 'COMPLETED'")
     List<Task> findOverdueTasks(@Param("date") LocalDateTime date);
+
+    //Native SQL soru direk veritabanına gönderilir daha esnek ve düşük seviyede kontrol sağlar
 
     @Query(value = """
             SELECT * FROM tasks
