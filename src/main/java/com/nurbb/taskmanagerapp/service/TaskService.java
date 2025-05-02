@@ -3,6 +3,7 @@ package com.nurbb.taskmanagerapp.service;
 import com.nurbb.taskmanagerapp.model.dto.response.TaskResponseDTO;
 import com.nurbb.taskmanagerapp.model.dto.response.TaskStatistics;
 import com.nurbb.taskmanagerapp.model.entity.Task;
+import com.nurbb.taskmanagerapp.model.exception.TaskStatusNotAvailableException;
 import com.nurbb.taskmanagerapp.model.mapper.ManualTaskMapper;
 import com.nurbb.taskmanagerapp.model.mapper.TaskResponseMapper;
 import com.nurbb.taskmanagerapp.repository.TaskRepository;
@@ -19,22 +20,26 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+//CRUD
 
 @Service
 @RequiredArgsConstructor
 public class TaskService {
 
     private final TaskRepository taskRepository;
-
-    //Görev oluşturulunca ya da tamamlanınca tetiklenecek listenerı tutar
-    // event- driven programlama yapısı
-    //Consumer<T> fonksiyonel bir Java arayüzüdür. accept(T t) adında tek bir metodu vardır.
-    //Bu interface'i kullanan her şey, Task objesini alıp onunla bir işlem yapabilir.
-    // Örnek: loglama, bildirim yollama, başka bir servisi çağırma gibi
     private final List<Consumer<Task>> taskCreationListeners = new ArrayList<>();
     private final List<Consumer<Task>> taskCompletionListeners = new ArrayList<>();
 
+// OBSERVER PATTERN:
+// Task ile ilgili bir şey yapıldığında o olayın sonucu olarak başka şeylerin sistem içinde tetiklenmesini sağlamak
+// geleneksel olarak her işlem sonrası manuel olarak diğer servisleri çağırma ihtiyacını ortadan kaldırır (event-driven)
+// exp: Task completed >>loglama yapılması ve kullanıcıya notif gönderilmesi Task Service bunları bilmez
+// onun yerine service'e Consumer <Task> tipinde fonk eklenir. Görev tamamlanınca bu fonk otomatik tetiklenir
 
+
+    // İşlemin tek bir bütün olarak yürütülmesini sağlar.
+    // Hata olursa rollback mekanizması çalışır tüm değişiklikler geri alınır.
+    // Veri bütünlüğü korunur.
     @Transactional
     public TaskResponseDTO createTask(String title,String description) {
         validateTaskInput(title,description); //Boş başlık oluşturmaya karşı kontrol
@@ -46,12 +51,14 @@ public class TaskService {
 
         taskCreationListeners.forEach(listener -> listener.accept(savedTask));
 
-        return ManualTaskMapper.toDTO(savedTask);
+        return ManualTaskMapper.toDTO(savedTask); //Dışarıya gönderilmeden önce Dto ya çevirilir
     }
 
     public List<TaskResponseDTO> getAllTasks() {
         return TaskResponseMapper.INSTANCE.toDTOList(taskRepository.findAll());
+        //Mapper ile repo’dan gelen tüm görevler DTO’ya çevrilir ve response olarak döner
     }
+
 
     public TaskResponseDTO getTaskById(UUID id) {
         return taskRepository.findById(id)
@@ -80,6 +87,8 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
+    //Empty title ve descp önlenmesi için
+
     private void validateTaskInput(String title, String description) {
         if(title == null || title.trim().isEmpty()){
             throw new IllegalArgumentException("Task title cannot empty.");
@@ -92,7 +101,8 @@ public class TaskService {
         return taskRepository.findByStatus(status).stream()
                 .map(TaskResponseMapper.INSTANCE::toDTO)
                 .collect(Collectors.toList());
-    }
+    } //birden fazla olabileceği için dönüş tipi list buduktan sonra da collect ediyoruz
+
     public Optional<TaskResponseDTO> findTaskByTitle(String title) {
         return taskRepository.findByTitleContainingIgnoreCase(title).stream()
                 .findFirst()
