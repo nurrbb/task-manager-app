@@ -29,6 +29,13 @@ public class Task {
     @With
     private TaskStatus status;
 
+    //Immutable(değiştirilemez) nesnelerle çalışırken tek alanı değiştiremek için orjinal nesnenin kopyasını
+    // yaratır ve sadece belirtilen alanı günceller. Uygulamanın farklı yerinde aynı nesne kullanılsa bile
+    // kimse yanlışlıkla orjinal veriyi değiştirmez. Aynı anda birden fazla thread aynı object ile çalışsa bile
+    // her biri kendi kopyası üzerinde çalıştığı için veri tutarsızlığı ve çakışma riski ortadan kalkar.
+    // Immutable nesne: oluşturulduktan sonra içindeki verilerin bir daha değiştirilmemesi.
+
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -49,8 +56,10 @@ public class Task {
         };
     }
 
-    // JPA Lifecycle anotasyonu: Veritabanı işlemleri gerçekleşmeden hemen önce ya da sonra otomatik olarak çalıştırılır
-    // Boş olan alanları dolduruluyor
+    // JPA Lifecycle anotasyonu: Veritabanı işlemleri gerçekleşmeden hemen önce ya da
+    // sonra otomatik olarak çalıştırılır
+    // Boş olan alanları dolduruluyor, Default olarak verilecek değerler için!
+
     @PrePersist
     protected void onCreate() {
         if (id == null) {
@@ -66,6 +75,7 @@ public class Task {
 
     //JPA Lifecycle anotasyonu.
     // Bir nesne  veritabanında güncelleme yapıldıktan sonra otomatik olarak tetiklenir
+
     @PostUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
@@ -90,7 +100,9 @@ public class Task {
 
     // Task'ın kopyası oluşturulur status alanını newStatus ile değiştirilir
     // Nesneler doğrudan değştirilmez, her değişiklikte yeni bir nesne oluşturulur.
-    // @WithXXX:  Sadece bir alanı değiştirip geri kalan her şeyi aynı bırakarak yeni bir nesne üreten Lombok'un metodu.
+    // @WithXXX:  Sadece bir alanı değiştirip geri kalan her şeyi
+    // aynı bırakarak yeni bir nesne üreten Lombok'un metodu.
+
     public Task updateStatus(TaskStatus newStatus) {
         Task updated = this.withStatus(newStatus);
         updated.updatedAt = LocalDateTime.now();
@@ -102,7 +114,9 @@ public class Task {
         PENDING, IN_PROGRESS, BLOCKED, COMPLETED
     }
 
-    //Sealed interface: Kontrollü kalıtım için permit ile belirtilen sınıfların yalnızca sealed interface i implement etmesine izin verilir.
+    //Sealed interface: Kontrollü kalıtım için permit ile belirtilen sınıfların yalnızca
+    // sealed interface i implement etmesine izin verilir.
+
     public sealed interface Priority permits LowPriority, MediumPriority, HighPriority {
         String getLabel();
         int getValue();
