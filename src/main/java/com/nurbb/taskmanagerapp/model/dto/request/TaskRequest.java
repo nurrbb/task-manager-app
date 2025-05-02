@@ -1,10 +1,10 @@
 package com.nurbb.taskmanagerapp.model.dto.request;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Setter
-@Getter
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class TaskRequest {
     private String title;
     private String description;
