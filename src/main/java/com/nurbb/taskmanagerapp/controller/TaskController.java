@@ -8,7 +8,7 @@ import com.nurbb.taskmanagerapp.model.dto.response.TaskResponseDTO;
 import com.nurbb.taskmanagerapp.model.dto.response.TaskStatistics;
 import com.nurbb.taskmanagerapp.model.entity.Task;
 import com.nurbb.taskmanagerapp.service.TaskService;
-import com.nurbb.taskmanagerapp.service.TaskStatusNotAvailableException;
+import com.nurbb.taskmanagerapp.model.exception.TaskStatusNotAvailableException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,10 +28,12 @@ import java.util.concurrent.CompletableFuture;
 @RestController
 @RequestMapping("/tasks")
 public class TaskController {
+
     private final TaskService taskService;
 
     //Constructor - based dependency injection örneğidir.
     // Task service sınıfı controllera inject edilmiştir.
+
     @Autowired
     public TaskController(TaskService taskService) {
         this.taskService = taskService;
@@ -39,19 +41,25 @@ public class TaskController {
 
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 
-    //request içeriği TaskRequest modeline bağlanır.
+    //Response Entity http response'ı sarmalayan bir spring sınıfı. Crud dönüş tipimiz.
+    //@requestbody spring taradından taskrequest nesnesine dönüştürülür. Servis katmanı veritabanına kaydeder ve
+    //taskresponse nesnesi döndürür. Dto entityyi dış dünyaya açmadan güvenli veri aktarımı sağlar
+
     public ResponseEntity<TaskResponseDTO> createTask(@RequestBody TaskRequest request){
         TaskResponseDTO newTask = taskService.createTask(request.getTitle(),request.getDescription());
         return new ResponseEntity<>(newTask, HttpStatus.CREATED);
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponseDTO>> getAllTaks() {
+
+    //Birden fazla entity gelecek List lazım bundan dönüş tipi list
+    public ResponseEntity<List<TaskResponseDTO>> getAllTasks() {
         return ResponseEntity.status(HttpStatus.OK).body(taskService.getAllTasks());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable UUID id) {
+        //Url yolundaki id değeri @Pathvariable anotasyonu ile alınır
         TaskResponseDTO task = taskService.getTaskById(id);
         if (task == null) {
             return ResponseEntity.notFound().build();
@@ -59,6 +67,7 @@ public class TaskController {
         return ResponseEntity.ok(task);
     }
 
+    //@patchmapping kısmi update için kullanılır. id ile hangi görev body ile yeni status request alınır
     @PatchMapping("/{id}/status")
     public ResponseEntity<Task> updateTaskStatus(
             @PathVariable UUID id,
@@ -73,11 +82,13 @@ public class TaskController {
         }
     }
 
+    //Body yok gerek yok
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
         taskService.deleteTaskById(id);
         return ResponseEntity.noContent().build();
     }
+
 
     @GetMapping("/status/{status}")
     public  ResponseEntity<List<TaskResponseDTO>> getTasksByStatus(@PathVariable Task.TaskStatus status) {
@@ -101,6 +112,7 @@ public class TaskController {
         return ResponseEntity.ok(taskService.generateTaskReport());
     }
 
+//Asenkron non-blocking biçimde getirmek için sistem performansı arttırmak için.Dar boğazın önüne geçilir.
     @GetMapping("/async")
     public CompletableFuture<ResponseEntity<List<TaskResponseDTO>>> getTasksAsync() {
         return taskService.getTasksAsync()
