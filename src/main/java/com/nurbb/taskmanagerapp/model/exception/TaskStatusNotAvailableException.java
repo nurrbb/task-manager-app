@@ -1,4 +1,4 @@
-package com.nurbb.taskmanagerapp.service;
+package com.nurbb.taskmanagerapp.model.exception;
 
 public class TaskStatusNotAvailableException extends RuntimeException {
     public TaskStatusNotAvailableException(String s) {}
