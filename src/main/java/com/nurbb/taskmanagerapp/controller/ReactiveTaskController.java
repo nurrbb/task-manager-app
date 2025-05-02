@@ -31,11 +31,18 @@ public class ReactiveTaskController {
         return taskService.createTask(request.getTitle(),request.getDescription());
     }
 
+    @GetMapping("/{id}")
+    public Mono<Task> getTaskById(@PathVariable UUID id) {
+        return taskService.getTaskById(id)
+                .switchIfEmpty(Mono.error(new TaskNotFoundException(id)));
+    }
+
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<Task> getAllTasks() {
         return taskService.getAllTasks();
     }
 
+    @PatchMapping("/{id}/status")
     public  Mono<Task> updateTaskStatus(
             @PathVariable UUID id,
             @RequestBody StatusUpdateRequest request){
