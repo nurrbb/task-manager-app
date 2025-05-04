@@ -105,7 +105,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Lombok Annotation Processor (for MapStruct & Lombok together) -->
+        <!-- Lombok Annotation Processor (for MapStruct & Lombok together (() -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok-mapstruct-binding</artifactId>
